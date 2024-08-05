@@ -1,0 +1,230 @@
+---
+title: "Salida Análisis TPVI Git"
+author: "Belmonte Valeria"
+date: "`r Sys.Date()`"
+output: word_document
+utput:
+  word_document: default
+  html_document: default
+  encoding: "UTF-8"
+---
+
+## Cargo las librerias que voy a usar
+```{r message=FALSE, , echo=FALSE}
+library(tidyverse)
+library(viridis)  #Para seleccionar paletas de color
+library(ggthemes) #Para elegir temas o plantillas de diseño para tu gráfico
+library(hrbrthemes)#Para elegir más temas o plantillas de diseño para tu gráfico
+library(flextable)# para dibujar tablas elegantes
+library(DT) # para tablas grandes
+#Sys.setlocale(category = "LC_ALL", locale = "Spanish")
+library(ggthemes) # temas para los fondos de los graficos ggplot
+library(paletteer) # para instalar paleta de colores
+library(treemap)
+options(OutDec = ",")
+options(encoding = 'UTF-8')
+```
+
+```{r, echo=FALSE,,eval=FALSE}
+#limpio la base antes de correr 
+rm(list=ls())
+```
+##cargo los datos con caracteristicas de los estudiantes
+Cargo los datos de la de las caracteristicas de los ingresantes de TPVI en **datos_ingreso** tiene las notas de todos los estudiantes de TPVI en 1 año que ingresaron en 2022 
+```{r, echo=FALSE}
+library(readxl)
+datos_ingreso<- read_excel("datos originales/TPVI.xlsx",
+na = "NA")
+```
+## Recodifico la variable 
+```{r }
+datos_ingreso <- datos_ingreso %>%
+  mutate(Situacion_Ocupacional_Alumno
+ = recode(Situacion_Ocupacional_Alumno
+, "Trabajó al menos una hora (incluye a los que no trabajaron por licencia, vacaciones, enfermedad)"
+ = "T")) %>% mutate(Situacion_Ocupacional_Alumno
+ = recode(Situacion_Ocupacional_Alumno
+, "No trabajó y no buscó trabajo (no esta pensando en trabajar)"
+ = "NTyNBT")) %>% 
+mutate(Situacion_Ocupacional_Alumno
+ = recode(Situacion_Ocupacional_Alumno
+, "No trabajó y buscó trabajo en algún momento de los últimos 30 días"= "NTyBT"))
+```
+
+```{r, echo=FALSE}
+nrow(datos_ingreso)
+```
+
+
+## Cargo las notas por materia 
+```{r, echo=FALSE}
+library(readxl)
+Matematica22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Matematica22",
+na = "NA")
+Matematica22=Matematica22 %>% select(Documento, Matematica22)
+#2#
+Int_cul_Int22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Int_cul_Int22",
+na = "NA")
+
+Int_cul_Int22=Int_cul_Int22 %>% select(Documento, Int_cul_Int22)
+#3#
+Informatica22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Informatica22",
+na = "NA")
+Informatica22=Informatica22 %>% select(Documento, Informatica22)
+#4#
+
+Elementos_quimica22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Elementos_quimica22",
+na = "NA")
+Elementos_quimica22=Elementos_quimica22 %>% select(Documento, Elementos_quimica22)
+#5#
+
+Biologia_a22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Biologia_a22",
+na = "NA")
+Biologia_a22=Biologia_a22 %>% select(Documento, Biologia_a22)
+#6#
+
+Botánica22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Botánica22",
+na = "NA")
+Botánica22=Botánica22 %>% select(Documento, Botánica22)
+#7#
+
+Estadística22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Estadística22",
+na = "NA")
+Estadística22=Estadística22 %>% select(Documento, Estadística22)
+
+#8#
+
+Int_Economía22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Int_Economía22",
+na = "NA")
+Int_Economía22=Int_Economía22 %>% select(Documento, Int_Economía22)
+#9
+Maquinaria22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "Maquinaria22",
+na = "NA")
+Maquinaria22=Maquinaria22 %>% select(Documento, Maquinaria22)
+#10
+SuelosyFert22<- read_excel("datos originales/Actas TPVI.xlsx",  sheet = "SuelosyFert22",
+na = "NA")
+SuelosyFert22=SuelosyFert22 %>% select(Documento, SuelosyFert22)
+```
+
+```{r}
+
+materias=c("Matematica22",
+           "Biologia_a22",
+"Elementos_quimica22",
+"Informatica22",      
+ "Int_cul_Int22",
+"Estadística22",
+"Botánica22", 
+ "Int_Economía22",     
+ "Maquinaria22",  
+"SuelosyFert22" )
+```
+
+## Funcion para unir bases
+
+```{r}
+# Función para unir los data frames por 'Documento'
+unir_por_documento <- function(lista) {
+  # Convertir los nombres de los data frames en una lista de objetos
+  lista_dataframes <- lapply(lista, get)
+  
+  # Usar reduce y dplyr::full_join para unir los data frames por 'Documento'
+  df_unido <- Reduce(function(x, y) dplyr::full_join(x, y, by = "Documento"), lista_dataframes)
+  
+  return(df_unido)
+}
+
+```
+## Notas completas TPVI estudiantes 2022 y años anteriores
+
+```{r}
+# Llamar a la función con la lista de nombres de los data frames
+TPVI_notas_sin_filtro <- unir_por_documento(materias)
+```
+
+```{r}
+nrow(TPVI_notas_sin_filtro)
+```
+
+```{r}
+TPVI_notas_carac_sin_filtro=unir_por_documento(c("datos_ingreso","TPVI_notas_sin_filtro"))
+```
+
+```{r}
+notas_TPVI_carac_22=TPVI_notas_carac_sin_filtro %>% filter(año_ing_F=="2022")
+```
+
+```{r}
+nrow(notas_TPVI_carac_22)
+```
+## Uno con la base de reinscriptos
+
+```{r, echo=FALSE}
+library(readxl)
+Reincriptos<- read_excel("datos originales/Ingresantes TPVI 2022 Reinscriptos 2023.xlsx")
+doc_reincriptos=Reincriptos %>% select(Documento)
+
+```
+```{r echo=FALSE}
+#Crear una nueva columna 'reincriptos_23' en 'notas_carac_Ing__lana_22'
+# Crear una nueva columna 'reincriptos_23' en 'notas_carac_Ing_lana_22'
+notas_carac_Ing_TPVI_22_ri23 <- notas_TPVI_carac_22 %>%
+mutate(reincriptos_23 = ifelse(Documento %in% doc_reincriptos$Documento, 1, 0))
+resumen=notas_carac_Ing_TPVI_22_ri23 %>% group_by(reincriptos_23) %>% summarise(n=n())
+resumen
+```
+
+la base **notas_carac_Ing_TPVI_22_ri23** tiene  los ingresantes 2022 con caracteristicas, notas de las materias y  si se reincribieron en 2023
+
+```{r}
+# Reemplazar NA con "Ausente" en las columnas de interés
+notas_carac_Ing_TPVI_22_ri23 <- notas_carac_Ing_TPVI_22_ri23 %>%
+  mutate(across(all_of(materias)  , ~ replace_na(., "Ausente")))
+
+# Crear una nueva columna con el número de materias regularizadas
+notas_carac_Ing_TPVI_22_ri23 <- notas_carac_Ing_TPVI_22_ri23 %>%
+  rowwise() %>%
+  mutate(Num_Regularizadas = sum(across(all_of(materias)) == "Regularizó", na.rm = TRUE)) %>%
+  ungroup()
+
+# Crear una nueva columna con el porcentaje de materias regularizadas
+notas_carac_Ing_TPVI_22_ri23 <- notas_carac_Ing_TPVI_22_ri23 %>%
+  mutate(Porc_Regularizadas = round((Num_Regularizadas / 9) * 100, 1))
+
+# Crear una nueva columna que identifique con 0 aquellos que tienen "Ausente" en todas las materias, y 1 en caso contrario
+notas_carac_Ing_TPVI_22_ri23 <- notas_carac_Ing_TPVI_22_ri23 %>%
+  rowwise() %>%
+  mutate(asitio_alguna_materia = ifelse(all(across(all_of(materias)) == "Ausente"), 0, 1)) %>%
+  ungroup()
+
+```
+
+## Ordeno la base para que quede  año,Documento, Nombre y todas las demás 
+
+```{r}
+# Reordenar las columnas para que "Nombre" sea la tercera columna
+notas_carac_Ing_TPVI_22_ri23 <- notas_carac_Ing_TPVI_22_ri23 %>%
+  select(Documento, año_ing_F, Nombre, everything())
+```
+
+
+
+```{r ,echo=FALSE}
+library(openxlsx)
+write.xlsx(notas_carac_Ing_TPVI_22_ri23, file = "datos procesados/notas_carac_Ing_TPVI_22_ri23.xlsx")
+
+```
+
+En **notas_carac_Ing_TPVI_22_ri23** estan los datos de notas caracterisitcas ingresantes 2022 que se reinscribieron en 2023 junto con la cantidad y procentaje de materias regularizadas en el año
+
+*_OBSERVACION_* asistio_alguna_materia = 1    asistió a por lo menos una materia 
+
+
+
+
+
+
+
+
+
